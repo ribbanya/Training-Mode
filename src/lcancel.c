@@ -152,7 +152,6 @@ void LCancel_GX(GOBJ *gobj, int pass) {
     #define HL_SY SY-1.1f // starting y
 
     static Rect hitlag_rects[32] = {
-        // {SX-P/2, SY, 27.f*W+P, H}, // background
         // background rects
         {SX-P/2+W*0, HL_SY, W+P, HL_H},
         {SX-P/2+W*1, HL_SY, W+P, HL_H},
