@@ -101,7 +101,7 @@ void LCancel_GX(GOBJ *gobj, int pass) {
     #define RED {0xff, 0x60, 0x60, 0xd0}
     #define GREEN {0xb4, 0xff, 0xb4, 0xd0}
     
-    static GXColor colors[28] = {
+    static GXColor main_colors[28] = {
         // background
         {0, 0, 0, 0xc0},
         
@@ -115,7 +115,7 @@ void LCancel_GX(GOBJ *gobj, int pass) {
         RED, RED, RED, RED, RED, RED, RED, RED, RED, RED,
     };
     
-    static Rect rects[28] = {
+    static Rect main_rects[28] = {
         {SX-P/2, SY, 27.f*W+P, H}, // background
         {SX+P/2+W*0, SY+P, W-P, H-P*2},
         {SX+P/2+W*1, SY+P, W-P, H-P*2},
@@ -145,7 +145,73 @@ void LCancel_GX(GOBJ *gobj, int pass) {
         {SX+P/2+W*25, SY+P, W-P, H-P*2},
         {SX+P/2+W*26, SY+P, W-P, H-P*2},
     };
-    event_vars->HUD_DrawRects(rects, colors, countof(rects));
+    event_vars->HUD_DrawRects(main_rects, main_colors, countof(main_rects));
+    
+    // hitlag values
+    #define HL_H 1.f // height of square
+    #define HL_SY SY-1.1f // starting y
+
+    static Rect hitlag_rects[32] = {
+        // {SX-P/2, SY, 27.f*W+P, H}, // background
+        // background rects
+        {SX-P/2+W*0, HL_SY, W+P, HL_H},
+        {SX-P/2+W*1, HL_SY, W+P, HL_H},
+        {SX-P/2+W*2, HL_SY, W+P, HL_H},
+        {SX-P/2+W*3, HL_SY, W+P, HL_H},
+        {SX-P/2+W*4, HL_SY, W+P, HL_H},
+        {SX-P/2+W*5, HL_SY, W+P, HL_H},
+        {SX-P/2+W*6, HL_SY, W+P, HL_H},
+        {SX-P/2+W*7, HL_SY, W+P, HL_H},
+        {SX-P/2+W*8, HL_SY, W+P, HL_H},
+        {SX-P/2+W*9, HL_SY, W+P, HL_H},
+        {SX-P/2+W*10, HL_SY, W+P, HL_H},
+        {SX-P/2+W*11, HL_SY, W+P, HL_H},
+        {SX-P/2+W*12, HL_SY, W+P, HL_H},
+        {SX-P/2+W*13, HL_SY, W+P, HL_H},
+        {SX-P/2+W*14, HL_SY, W+P, HL_H},
+        {SX-P/2+W*15, HL_SY, W+P, HL_H},
+
+        // main rects
+        {SX+P/2+W*0, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*1, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*2, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*3, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*4, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*5, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*6, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*7, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*8, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*9, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*10, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*11, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*12, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*13, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*14, HL_SY+P, W-P, HL_H-P*2},
+        {SX+P/2+W*15, HL_SY+P, W-P, HL_H-P*2},
+    };
+
+    if (event_data->success != 0) {
+        // Color hitlag rects.
+        // If a run of hitlag intersects with the 7f lcancel window,
+        // then any lrz input in that hitlag run counts for lcancel.
+        // We don't store the last 11 frames, since there will never be hitlag after landing.
+        // Note that the last lcanceleable frame is during landing.
+        static GXColor hitlag_colors[32];
+        bool lcancel_window = true;
+        for (u32 i = 0; i < 16; ++i) {
+            GXColor back_c = {0};
+            GXColor main_c = {0};
+            if (event_data->hitlag_log & (1u << i)) {
+                back_c.a = 0xB0;
+                main_c = lcancel_window ? (GXColor)GREEN : (GXColor)RED;
+            } else if (i >= 5) {
+                lcancel_window = false;
+            }
+            hitlag_colors[15-i] = back_c;
+            hitlag_colors[31-i] = main_c;
+        }
+        event_vars->HUD_DrawRects(hitlag_rects, hitlag_colors, countof(hitlag_rects));
+    }
 
     Tri tris[countof(event_data->lrz_input_frame)*2];
     GXColor tri_color[countof(event_data->lrz_input_frame)*2];
@@ -268,6 +334,13 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
         event_data->land_frame = 0;
         event_data->cur_frame = 0;
         event_data->lrz_input_count = 0;
+        event_data->hitlag_log = 0;
+    }
+
+    // log hitlag
+    if (IsAerialState(state)) {
+        event_data->hitlag_log <<= 1;
+        event_data->hitlag_log |= hmn_data->flags.hitlag;
     }
 
     // log lrz inputs

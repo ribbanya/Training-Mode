@@ -21,7 +21,8 @@ struct LCancelData
     int lrz_input_frame[8];
     int land_frame;
     int cur_frame;
-    
+    u32 hitlag_log;
+
     int successful_attempts;
     int total_attempts;
 
